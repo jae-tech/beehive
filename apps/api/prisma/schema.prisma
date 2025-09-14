@@ -1,0 +1,148 @@
+// Beehive 웹 서비스 데이터베이스 스키마
+// PostgreSQL 기반 소규모 사업자용 재고 및 거래처 관리 시스템
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. 사용자 테이블 - 웹 서비스 회원 관리
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique                    // 로그인 ID로 사용
+  name      String                              // 사용자명
+  password  String                              // 암호화된 비밀번호
+  phone     String?                             // 연락처 (선택적)
+  company   String?                             // 회사명 (선택적)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 관계 정의 - 사용자별 데이터 격리
+  categories        Category[]
+  suppliers         Supplier[]
+  products          Product[]
+  stockTransactions StockTransaction[]
+
+  @@map("users")
+}
+
+// 2. 카테고리 테이블 - 상품 분류 관리
+model Category {
+  id        String   @id @default(cuid())
+  name      String                              // 카테고리명 (예: 전자제품, 의류, 식품)
+  color     String?                             // UI 표시용 색상 (HEX 코드)
+  userId    String                              // 카테고리 소유자
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 관계 정의
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  // 제약 조건: 동일 사용자 내에서 카테고리명 중복 방지
+  @@unique([userId, name])
+  @@map("categories")
+}
+
+// 3. 거래처 테이블 - 고객 및 공급업체 관리
+model Supplier {
+  id            String   @id @default(cuid())
+  name          String                          // 거래처명
+  type          SupplierType                    // 거래처 유형 (고객/공급업체/양방향)
+  contactPerson String?                         // 담당자명
+  email         String?                         // 연락 이메일
+  phone         String?                         // 연락처
+  address       String?                         // 주소
+  notes         String?                         // 비고 및 메모
+  userId        String                          // 거래처 소유자
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // 관계 정의
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products          Product[]          // 공급받는 상품들
+  stockTransactions StockTransaction[] // 거래처와의 입출고 기록
+
+  // 제약 조건: 동일 사용자 내에서 거래처 이메일 중복 방지 (이메일이 있는 경우)
+  @@unique([userId, email])
+  @@map("suppliers")
+}
+
+// 4. 상품 테이블 - 판매/관리 상품 정보
+model Product {
+  id          String   @id @default(cuid())
+  name        String                            // 상품명
+  description String?                           // 상품 설명
+  sku         String                            // 재고 관리 코드 (Stock Keeping Unit)
+  barcode     String?                           // 바코드 (선택적)
+  price       Decimal  @db.Decimal(10, 2)       // 판매 가격
+  costPrice   Decimal? @db.Decimal(10, 2)       // 원가 (선택적)
+  currentStock Int     @default(0)              // 현재 재고 수량
+  minStock    Int?     @default(0)              // 최소 재고 수준 (알림용)
+  maxStock    Int?                              // 최대 재고 수준
+  unit        String   @default("개")            // 재고 단위 (개, kg, L 등)
+  categoryId  String?                           // 카테고리 ID
+  supplierId  String?                           // 주 공급업체 ID
+  userId      String                            // 상품 소유자
+  isActive    Boolean  @default(true)           // 활성 상품 여부
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 관계 정의
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category          Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  supplier          Supplier?          @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  stockTransactions StockTransaction[]
+
+  // 제약 조건: 동일 사용자 내에서 SKU 중복 방지
+  @@unique([userId, sku])
+  @@map("products")
+}
+
+// 5. 재고 거래 내역 테이블 - 입출고 이력 추적
+model StockTransaction {
+  id          String              @id @default(cuid())
+  type        StockTransactionType             // 거래 유형 (입고/출고/조정/손실)
+  quantity    Int                              // 거래 수량 (양수: 입고, 음수: 출고)
+  price       Decimal?            @db.Decimal(10, 2) // 단가 (입고시 구매가, 출고시 판매가)
+  totalAmount Decimal?            @db.Decimal(10, 2) // 총 거래금액
+  reason      String                           // 거래 사유/메모
+  reference   String?                          // 참조 번호 (주문번호, 송장번호 등)
+  productId   String                           // 대상 상품
+  supplierId  String?                          // 관련 거래처 (있는 경우)
+  userId      String                           // 거래 기록자
+  beforeStock Int                              // 거래 전 재고
+  afterStock  Int                              // 거래 후 재고
+  createdAt   DateTime            @default(now())
+
+  // 관계 정의
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product  Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+
+  @@map("stock_transactions")
+}
+
+// 열거형 정의
+
+// 거래처 유형
+enum SupplierType {
+  CUSTOMER    // 고객 (상품을 구매하는 업체)
+  SUPPLIER    // 공급업체 (상품을 공급하는 업체)
+  BOTH        // 양방향 (구매도 하고 판매도 하는 업체)
+}
+
+// 재고 거래 유형
+enum StockTransactionType {
+  PURCHASE    // 구매 입고
+  SALE        // 판매 출고
+  ADJUSTMENT  // 재고 조정 (실사 등)
+  RETURN      // 반품 (입고 또는 출고)
+  TRANSFER    // 이동 (창고간 이동 등)
+  LOSS        // 손실 (파손, 분실 등)
+  PRODUCTION  // 생산 (제조업체의 경우)
+}

@@ -26,10 +26,7 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/ui/*": ["../../packages/components/src/*"],
-      "@/lib/*": ["../../packages/components/lib/*"],
-      "@beehive/components": ["../../packages/components/src/index.ts"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"]

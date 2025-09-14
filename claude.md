@@ -169,6 +169,7 @@ This is a **customer and inventory management system for small business owners**
 - **Style**: Keep responses concise and actionable
 - **Focus**: Address the specific task without unnecessary explanations
 - **Package Management**: Always suggest latest stable versions and keep dependencies updated
+- **Compact Mode**: When left context is 50% or lower, automatically enable /compact mode
 
 ### Business Logic Priorities
 
@@ -207,3 +208,39 @@ chore: Turborepo 환경 구성 및 패키지 업데이트
 - 필요시 본문에 변경사항에 대한 자세한 설명을 한글로 작성
 - 여러 변경사항이 있을 경우 리스트로 정리
 - 주요 기술적 결정사항이나 아키텍처 변경사항 설명
+
+## Recent Work Completed
+
+### TailwindCSS v4 + Vite 설정 완료
+- **TailwindCSS v4**: `@tailwindcss/vite` 플러그인 사용하여 Vite와 통합
+- **설정 파일**: 
+  - `vite.config.ts`: `@tailwindcss/vite` 플러그인 추가
+  - `src/index.css`: `@import "tailwindcss";` 방식 사용
+  - `tailwind.config.js`: 컴포넌트 패키지 설정 임포트
+
+### 모노레포 컴포넌트 패키지 구조 개선
+- **@beehive/components**: 중앙화된 UI 컴포넌트 라이브러리
+- **패키지 빌드**: tsup을 사용한 ESM/CJS 듀얼 빌드
+- **exports 설정**: package.json에서 proper exports 필드 설정
+- **모듈 해석**: workspace dependencies 제대로 작동
+
+### 주요 해결 사항
+- **TailwindCSS v4 호환성**: shadcn/ui 컴포넌트와 함께 작동
+- **Vite 캐시 문제**: node_modules/.vite 캐시 정리로 해결
+- **모듈 해석 문제**: 컴포넌트 패키지 빌드 후 해결
+- **CSS 변수 설정**: shadcn/ui에 필요한 CSS 커스텀 속성 추가
+
+### 현재 작동 중인 설정
+```bash
+# beehive 앱 개발 서버 시작
+cd apps/beehive && pnpm dev
+
+# 컴포넌트 패키지 빌드
+pnpm build --filter=@beehive/components
+```
+
+### 아키텍처 변경점
+- **스타일링**: TailwindCSS v4 + @tailwindcss/vite 플러그인
+- **컴포넌트 구조**: 중앙화된 @beehive/components 패키지
+- **빌드 시스템**: tsup 기반 컴포넌트 빌드, Vite 기반 앱 빌드
+- **개발 환경**: http://localhost:5173 (Vite 개발 서버)
