@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-소규모 창업자들을 위한 고객 및 재고 관리 시스템을 개발하는 프로젝트입니다. 스타트업과 소상공인이 고객 정보와 재고 현황을 쉽고 효율적으로 관리할 수 있도록 지원하는 웹 애플리케이션입니다.
+소규모 창업자들을 위한 거래처 및 재고 관리 시스템을 개발하는 프로젝트입니다. 스타트업과 소상공인이 거래처 정보와 재고 현황을 쉽고 효율적으로 관리할 수 있도록 지원하는 웹 애플리케이션입니다.
 
 ### 주요 기능
 
-- 고객 정보 관리 (등록, 수정, 조회)
+- 거래처 정보 관리 (등록, 수정, 조회)
 - 재고 현황 관리 및 추적
-- 고객별 주문/구매 이력 관리
+- 거래처별 주문/구매 이력 관리
 - 재고 입출고 관리 및 이력 추적
 - 통합 대시보드 및 리포팅
 
@@ -196,7 +196,7 @@ This is a **customer and inventory management system for small business owners**
 ### Examples
 
 ```
-feat: 고객 등록 기능 추가
+feat: 거래처 등록 기능 추가
 fix: 재고 조회 시 오류 수정
 docs: API 문서 업데이트
 refactor: 주문 처리 로직 개선
